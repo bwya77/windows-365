@@ -1,0 +1,223 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "When_a_provisioning_policy_or_Cloud_PC_is_updated": {
+                "type": "ApiConnectionWebhook",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['windows365']['connectionId']"
+                        }
+                    },
+                    "body": {
+                        "scenario": "When a Cloud PC is created",
+                        "notificationUrl": "@listCallbackUrl()"
+                    },
+                    "path": "/beta/deviceManagement/virtualEndpoint/webhooks"
+                }
+            }
+        },
+        "actions": {
+            "For_each": {
+                "type": "Foreach",
+                "foreach": "@triggerBody()",
+                "actions": {
+                    "Get_a_Cloud_PC": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['windows365']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/beta/deviceManagement/virtualEndpoint/cloudPCs/@{encodeURIComponent(items('For_each')?['data']?['data']?['cloudPCId'])}"
+                        }
+                    },
+                    "If_shared": {
+                        "type": "If",
+                        "expression": {
+                            "equals": [
+                                "@body('Get_a_Cloud_PC')?['provisioningType']",
+                                "sharedByEntraGroup"
+                            ]
+                        },
+                        "actions": {
+                            "List_Provisioned_CPCs_for_policy": {
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['windows365']['connectionId']"
+                                        }
+                                    },
+                                    "method": "get",
+                                    "path": "/beta/deviceManagement/virtualEndpoint/cloudPCs",
+                                    "queries": {
+                                        "$filter": "provisioningPolicyId eq '@{body('Get_a_Cloud_PC')?['provisioningPolicyId']}' and status eq 'provisioned'"
+                                    }
+                                }
+                            },
+                            "If_another_CPC_status_is_provisioned": {
+                                "type": "If",
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "equals": [
+                                                "@empty(body('List_Provisioned_CPCs_for_policy')?['value'])",
+                                                "@false"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "actions": {},
+                                "else": {
+                                    "actions": {
+                                        "Get_a_provisioning_policy_assignments": {
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['windows365']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "get",
+                                                "path": "/beta/deviceManagement/virtualEndpoint/provisioningPolicies/@{encodeURIComponent(body('Get_a_Cloud_PC')?['provisioningPolicyId'])}",
+                                                "queries": {
+                                                    "$expand": "assignments"
+                                                }
+                                            }
+                                        },
+                                        "For_each_assignment": {
+                                            "type": "Foreach",
+                                            "foreach": "@body('Get_a_provisioning_policy_assignments')?['assignments']",
+                                            "actions": {
+                                                "Get_group_members": {
+                                                    "type": "ApiConnection",
+                                                    "inputs": {
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuread']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "get",
+                                                        "path": "/v1.0/groups/@{encodeURIComponent(items('For_each_assignment')?['target']?['groupId'])}/members"
+                                                    }
+                                                },
+                                                "For_each_member": {
+                                                    "type": "Foreach",
+                                                    "foreach": "@body('Get_group_members')?['value']",
+                                                    "actions": {
+                                                        "Send_an_email": {
+                                                            "type": "ApiConnection",
+                                                            "inputs": {
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['office365']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "body": {
+                                                                    "To": "@{items('For_each_member')?['userPrincipalName']}",
+                                                                    "Subject": "Your Cloud PC is ready!",
+                                                                    "Body": "<p>Your shared Cloud PC, '@{items('For_each_assignment')?['target']?['allotmentDisplayName']}', is provisioned and ready.</p>",
+                                                                    "Importance": "Normal"
+                                                                },
+                                                                "path": "/v2/Mail"
+                                                            }
+                                                        }
+                                                    },
+                                                    "runAfter": {
+                                                        "Get_group_members": [
+                                                            "Succeeded"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Get_a_provisioning_policy_assignments": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "runtimeConfiguration": {
+                                                "concurrency": {
+                                                    "repetitions": 1
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "runAfter": {
+                                    "List_Provisioned_CPCs_for_policy": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        },
+                        "else": {
+                            "actions": {
+                                "Get_user_profile_": {
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365users']['connectionId']"
+                                            }
+                                        },
+                                        "method": "get",
+                                        "path": "/codeless/v1.0/users/@{encodeURIComponent(body('Get_a_Cloud_PC')?['userPrincipalName'])}"
+                                    }
+                                },
+                                "Send_email_single": {
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "body": {
+                                            "To": "@body('Get_user_profile_')?['mail']",
+                                            "Subject": "Your Cloud PC is ready!",
+                                            "Body": "<p class=\"editor-paragraph\">Your Cloud PC, \"@{body('Get_a_Cloud_PC')?['displayName']}\" is provisioned and ready.</p>",
+                                            "Importance": "Normal"
+                                        },
+                                        "path": "/v2/Mail"
+                                    },
+                                    "runAfter": {
+                                        "Get_user_profile_": [
+                                            "Succeeded"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "Get_a_Cloud_PC": [
+                                "Succeeded"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {}
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+            }
+        }
+    }
+}
