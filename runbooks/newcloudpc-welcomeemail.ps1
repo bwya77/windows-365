@@ -1,6 +1,8 @@
 $AppID = Get-AutomationVariable -Name 'appID' 
 $TenantID = Get-AutomationVariable -Name 'tenantID'
 $AppSecret = Get-AutomationVariable -Name 'appSecret' 
+$StateVarName = 'SentCloudPCEmails'
+$RetentionDays = 30
 $verbosepreference = 'continue'
 <#
 CloudPC.Read.All
