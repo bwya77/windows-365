@@ -65,14 +65,19 @@ Connect-MgGraph -Identity -NoWelcome
 function Get-MgGraphAllPages {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Uri
+        [string]$Uri,
+
+        # Set when the query combines $count=true with an advanced filter operator (e.g. "ne")
+        # against an enum-backed property -- Graph requires ConsistencyLevel: eventual in that case.
+        [switch]$ConsistencyLevelEventual
     )
 
     $results = [System.Collections.Generic.List[object]]::new()
     $nextUri = $Uri
+    $headers = if ($ConsistencyLevelEventual) { @{ ConsistencyLevel = 'eventual' } } else { @{} }
 
     while ($nextUri) {
-        $response = Invoke-MgGraphRequest -Method GET -Uri $nextUri
+        $response = Invoke-MgGraphRequest -Method GET -Uri $nextUri -Headers $headers
         if ($response.value) {
             $results.AddRange($response.value)
         }
@@ -136,11 +141,13 @@ $select = 'id,managedDeviceId,managedDeviceName,status,provisioningType,userPrin
 $allReserveCloudPcs = [System.Collections.Generic.List[object]]::new()
 
 foreach ($policy in $reservePolicies) {
-    $cloudPcFilter = "provisioningPolicyId eq '$($policy.id)'"
+    $cloudPcFilter = "(provisioningPolicyId eq '$($policy.id)') and (status ne 'notProvisioned')"
     $cloudPcUri = "https://graph.microsoft.com/beta/deviceManagement/virtualEndpoint/cloudPCs" +
                   "?`$filter=$cloudPcFilter&`$select=$select&`$orderBy=provisionedDateTime desc&`$count=true"
 
-    $cloudPcs = Get-MgGraphAllPages -Uri $cloudPcUri
+    # ConsistencyLevel: eventual is required when combining $count=true with an advanced query
+    # operator like "ne" against an enum-backed property such as status.
+    $cloudPcs = Get-MgGraphAllPages -Uri $cloudPcUri -ConsistencyLevelEventual
     foreach ($cloudPc in $cloudPcs) {
         # Tag each Cloud PC with the policy it came from so multi-policy output is traceable
         $cloudPc | Add-Member -NotePropertyName 'reservePolicyId' -NotePropertyValue $policy.id -Force
