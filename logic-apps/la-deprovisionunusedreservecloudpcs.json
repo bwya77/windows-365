@@ -25,8 +25,8 @@
 }
 },
 "variables": {
-"Azureautomation-ConnectionName": "[concat('Azureautomation-', parameters('PlaybookName'))]",
-"Office365-ConnectionName": "[concat('Office365-', parameters('PlaybookName'))]"
+"Azureautomation-1ConnectionName": "[concat('Azureautomation-1-', parameters('PlaybookName'))]",
+"Office365-1ConnectionName": "[concat('Office365-1-', parameters('PlaybookName'))]"
 },
 "resources": [
 {
@@ -66,7 +66,7 @@
         "inputs": {
             "host": {
                 "connection": {
-                    "name": "@parameters('$connections')['Azureautomation-']['connectionId']"
+                    "name": "@parameters('$connections')['azureautomation-1']['connectionId']"
                 }
             },
             "method": "put",
@@ -74,8 +74,8 @@
                 "properties": {
                     "parameters": {
                         "ReservePolicyDisplayName": "W365-Reserve",
-                        "MinProvisionedHours": 24,
-                        "MinIdleHours": 24
+                        "MinProvisionedHours": 0,
+                        "MinIdleHours": 0
                     }
                 }
             },
@@ -97,7 +97,7 @@
         "inputs": {
             "host": {
                 "connection": {
-                    "name": "@parameters('$connections')['Azureautomation-']['connectionId']"
+                    "name": "@parameters('$connections')['azureautomation-1']['connectionId']"
                 }
             },
             "method": "get",
@@ -134,16 +134,13 @@
                         }
                     },
                     "reservePolicies": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string"
-                                },
-                                "displayName": {
-                                    "type": "string"
-                                }
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "displayName": {
+                                "type": "string"
                             }
                         }
                     },
@@ -154,69 +151,7 @@
                         "type": "integer"
                     },
                     "idleCloudPcs": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "cloudPcId": {
-                                    "type": "string"
-                                },
-                                "managedDeviceName": {
-                                    "type": "string"
-                                },
-                                "managedDeviceId": {
-                                    "type": "string"
-                                },
-                                "status": {
-                                    "type": "string"
-                                },
-                                "reservePolicyId": {
-                                    "type": "string"
-                                },
-                                "reservePolicyName": {
-                                    "type": "string"
-                                },
-                                "assignedUserPrincipalName": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
-                                },
-                                "provisionedDateTimeUtc": {
-                                    "type": "string"
-                                },
-                                "hoursSinceProvisioned": {
-                                    "type": "number"
-                                },
-                                "neverSignedIn": {
-                                    "type": "boolean"
-                                },
-                                "signInStatus": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
-                                },
-                                "lastActiveTimeUtc": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
-                                },
-                                "daysSinceLastSignIn": {
-                                    "type": [
-                                        "integer",
-                                        "null"
-                                    ]
-                                },
-                                "hoursSinceLastSignIn": {
-                                    "type": [
-                                        "number",
-                                        "null"
-                                    ]
-                                }
-                            }
-                        }
+                        "type": "array"
                     },
                     "emailBodyHtml": {
                         "type": "string"
@@ -235,7 +170,7 @@
                         "inputs": {
                             "host": {
                                 "connection": {
-                                    "name": "@parameters('$connections')['Office365-']['connectionId']"
+                                    "name": "@parameters('$connections')['office365-1']['connectionId']"
                                 }
                             },
                             "body": {
@@ -244,8 +179,7 @@
                                     "To": "brad@windowsfromanywhere.com",
                                     "Body": "<p>The following Windows 365 Reserve Cloud PC has been idle and is a candidate for deprovisioning:</p><table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;\"><tr><td><b>Device Name</b></td><td>@{items('For_each_idle_Cloud_PC')?['managedDeviceName']}</td></tr><tr><td><b>Assigned User</b></td><td>@{items('For_each_idle_Cloud_PC')?['assignedUserPrincipalName']}</td></tr><tr><td><b>Reserve Policy</b></td><td>@{items('For_each_idle_Cloud_PC')?['reservePolicyName']}</td></tr><tr><td><b>Provisioned (UTC)</b></td><td>@{items('For_each_idle_Cloud_PC')?['provisionedDateTimeUtc']}</td></tr><tr><td><b>Last Sign-In (UTC)</b></td><td>@{if(items('For_each_idle_Cloud_PC')?['neverSignedIn'], 'Never signed in', items('For_each_idle_Cloud_PC')?['lastActiveTimeUtc'])}</td></tr></table><p>Approve to deprovision this specific Cloud PC now, or reject to leave it as-is.</p>",
                                     "Importance": "Normal",
-                                    "HideHTMLMessage": false,
-                                    "ShowHTMLConfirmationDialog": false,
+                                    "UseOnlyHTMLMessage": true,
                                     "Subject": "Approval Request: deprovision idle Windows 365 Reserve Cloud PC @{items('For_each_idle_Cloud_PC')?['managedDeviceName']}",
                                     "Options": "Approve, Reject"
                                 }
@@ -260,7 +194,7 @@
                                 "inputs": {
                                     "host": {
                                         "connection": {
-                                            "name": "@parameters('$connections')['Azureautomation-']['connectionId']"
+                                            "name": "@parameters('$connections')['azureautomation-1']['connectionId']"
                                         }
                                     },
                                     "method": "put",
@@ -336,16 +270,16 @@
 "parameters": {
 "$connections": {
 "value": {
-"Azureautomation-": {
-"connectionId": "[resourceId('Microsoft.Web/connections', variables('Azureautomation-ConnectionName'))]",
-"connectionName": "[variables('Azureautomation-ConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-')]",
+"azureautomation-1": {
+"connectionId": "[resourceId('Microsoft.Web/connections', variables('Azureautomation-1ConnectionName'))]",
+"connectionName": "[variables('Azureautomation-1ConnectionName')]",
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureautomation')]",
 "connectionProperties": {}
 },
-"Office365-": {
-"connectionId": "[resourceId('Microsoft.Web/connections', variables('Office365-ConnectionName'))]",
-"connectionName": "[variables('Office365-ConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Office365-')]",
+"office365-1": {
+"connectionId": "[resourceId('Microsoft.Web/connections', variables('Office365-1ConnectionName'))]",
+"connectionName": "[variables('Office365-1ConnectionName')]",
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]",
 "connectionProperties": {}
 }
 }
@@ -364,35 +298,35 @@
 },
 "apiVersion": "2017-07-01",
 "dependsOn": [
-"[resourceId('Microsoft.Web/connections', variables('Azureautomation-ConnectionName'))]",
-"[resourceId('Microsoft.Web/connections', variables('Office365-ConnectionName'))]"
+"[resourceId('Microsoft.Web/connections', variables('Azureautomation-1ConnectionName'))]",
+"[resourceId('Microsoft.Web/connections', variables('Office365-1ConnectionName'))]"
 ]
 },
 {
 "type": "Microsoft.Web/connections",
 "apiVersion": "2016-06-01",
-"name": "[variables('Azureautomation-ConnectionName')]",
+"name": "[variables('Azureautomation-1ConnectionName')]",
 "location": "[resourceGroup().location]",
 "kind": "V1",
 "properties": {
-"displayName": "[variables('Azureautomation-ConnectionName')]",
+"displayName": "[variables('Azureautomation-1ConnectionName')]",
 "customParameterValues": {},
 "api": {
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-')]"
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureautomation')]"
 }
 }
 },
 {
 "type": "Microsoft.Web/connections",
 "apiVersion": "2016-06-01",
-"name": "[variables('Office365-ConnectionName')]",
+"name": "[variables('Office365-1ConnectionName')]",
 "location": "[resourceGroup().location]",
 "kind": "V1",
 "properties": {
-"displayName": "[variables('Office365-ConnectionName')]",
+"displayName": "[variables('Office365-1ConnectionName')]",
 "customParameterValues": {},
 "api": {
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Office365-')]"
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
 }
 }
 }
