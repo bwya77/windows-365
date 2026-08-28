@@ -25,7 +25,7 @@
 }
 },
 "variables": {
-"Azureautomation-1ConnectionName": "[concat('Azureautomation-1-', parameters('PlaybookName'))]",
+"AzureautomationConnectionName": "[concat('Azureautomation-', parameters('PlaybookName'))]",
 "Office365ConnectionName": "[concat('Office365-', parameters('PlaybookName'))]"
 },
 "resources": [
@@ -66,7 +66,7 @@
         "inputs": {
             "host": {
                 "connection": {
-                    "name": "@parameters('$connections')['azureautomation-1']['connectionId']"
+                    "name": "@parameters('$connections')['Azureautomation']['connectionId']"
                 }
             },
             "method": "put",
@@ -88,7 +88,7 @@
         "inputs": {
             "host": {
                 "connection": {
-                    "name": "@parameters('$connections')['azureautomation-1']['connectionId']"
+                    "name": "@parameters('$connections')['Azureautomation']['connectionId']"
                 }
             },
             "method": "get",
@@ -253,10 +253,10 @@
 "parameters": {
 "$connections": {
 "value": {
-"azureautomation-1": {
-"connectionId": "[resourceId('Microsoft.Web/connections', variables('Azureautomation-1ConnectionName'))]",
-"connectionName": "[variables('Azureautomation-1ConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-1')]",
+"Azureautomation": {
+"connectionId": "[resourceId('Microsoft.Web/connections', variables('AzureautomationConnectionName'))]",
+"connectionName": "[variables('AzureautomationConnectionName')]",
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation')]",
 "connectionProperties": {}
 },
 "office365": {
@@ -281,21 +281,21 @@
 },
 "apiVersion": "2017-07-01",
 "dependsOn": [
-"[resourceId('Microsoft.Web/connections', variables('Azureautomation-1ConnectionName'))]",
+"[resourceId('Microsoft.Web/connections', variables('AzureautomationConnectionName'))]",
 "[resourceId('Microsoft.Web/connections', variables('Office365ConnectionName'))]"
 ]
 },
 {
 "type": "Microsoft.Web/connections",
 "apiVersion": "2016-06-01",
-"name": "[variables('Azureautomation-1ConnectionName')]",
+"name": "[variables('AzureautomationConnectionName')]",
 "location": "[resourceGroup().location]",
 "kind": "V1",
 "properties": {
-"displayName": "[variables('Azureautomation-1ConnectionName')]",
+"displayName": "[variables('AzureautomationConnectionName')]",
 "customParameterValues": {},
 "api": {
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-1')]"
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation')]"
 }
 }
 },
