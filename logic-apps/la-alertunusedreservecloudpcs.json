@@ -20,7 +20,7 @@
 },
 "parameters": {
 "PlaybookName": {
-"defaultValue": "la-unusedreservecloudpcs",
+"defaultValue": "la-alertunusedreservecloudpcs",
 "type": "string"
 }
 },
@@ -125,13 +125,16 @@
                         }
                     },
                     "reservePolicies": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "displayName": {
-                                "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "displayName": {
+                                    "type": "string"
+                                }
                             }
                         }
                     },
@@ -142,110 +145,55 @@
                         "type": "integer"
                     },
                     "idleCloudPcs": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "cloudPcId": {
-                                    "type": "string"
-                                },
-                                "managedDeviceName": {
-                                    "type": "string"
-                                },
-                                "managedDeviceId": {
-                                    "type": "string"
-                                },
-                                "status": {
-                                    "type": "string"
-                                },
-                                "reservePolicyId": {
-                                    "type": "string"
-                                },
-                                "reservePolicyName": {
-                                    "type": "string"
-                                },
-                                "assignedUserPrincipalName": {
-                                    "type": "string"
-                                },
-                                "provisionedDateTimeUtc": {
-                                    "type": "string"
-                                },
-                                "hoursSinceProvisioned": {
-                                    "type": "number"
-                                },
-                                "neverSignedIn": {
-                                    "type": "boolean"
-                                },
-                            "signInStatus": {},
-                        "lastActiveTimeUtc": {},
-                    "daysSinceLastSignIn": {},
-                "hoursSinceLastSignIn": {}
-            },
-            "required": [
-                "cloudPcId",
-                "managedDeviceName",
-                "managedDeviceId",
-                "status",
-                "reservePolicyId",
-                "reservePolicyName",
-                "assignedUserPrincipalName",
-                "provisionedDateTimeUtc",
-                "hoursSinceProvisioned",
-                "neverSignedIn",
-                "signInStatus",
-                "lastActiveTimeUtc",
-                "daysSinceLastSignIn",
-                "hoursSinceLastSignIn"
+                        "type": "array"
+                    },
+                    "emailBodyHtml": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "Are_there_1_or_more_reserve_PCs_that_can_be_deprovisioned": {
+        "actions": {
+            "Send_an_email_(V2)": {
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['office365']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "body": {
+                        "To": "brad@windowsfromanywhere.com",
+                        "Subject": "Windows 365 Reserve idle Cloud PCs (@{body('Parse_JSON_Results')?['idleCount']})",
+                        "Body": "@body('Parse_JSON_Results')?['emailBodyHtml']",
+                        "Importance": "Normal"
+                    },
+                    "path": "/v2/Mail"
+                }
+            }
+        },
+        "runAfter": {
+            "Parse_JSON_Results": [
+                "Succeeded"
             ]
-        }
+        },
+        "else": {
+        "actions": {}
     },
-    "emailBodyHtml": {
-        "type": "string"
-    }
-}
-}
-}
-},
-"Are_there_1_or_more_reserve_PCs_that_can_be_deprovisioned": {
-"actions": {
-"Send_an_email_(V2)": {
-"type": "ApiConnection",
-"inputs": {
-    "host": {
-        "connection": {
-            "name": "@parameters('$connections')['office365']['connectionId']"
-        }
+    "expression": {
+        "and": [
+            {
+                "greater": [
+                    "@body('Parse_JSON_Results')?['idleCount']",
+                    0
+                ]
+            }
+        ]
     },
-    "method": "post",
-    "body": {
-        "To": "brad@windowsfromanywhere.com",
-        "Subject": "Windows 365 Reserve idle Cloud PCs (@{body('Parse_JSON_Results')?['idleCount']})",
-        "Body": "@body('Parse_JSON_Results')?['emailBodyHtml']",
-        "Importance": "Normal"
-    },
-    "path": "/v2/Mail"
-}
-}
-},
-"runAfter": {
-"Parse_JSON_Results": [
-"Succeeded"
-]
-},
-"else": {
-"actions": {}
-},
-"expression": {
-"and": [
-{
-"greater": [
-    "@body('Parse_JSON_Results')?['idleCount']",
-    0
-]
-}
-]
-},
-"type": "If"
+    "type": "If"
 }
 },
 "outputs": {}
@@ -254,9 +202,9 @@
 "$connections": {
 "value": {
 "Azureautomation": {
-"connectionId": "[resourceId('Microsoft.Web/connections', variables('AzureautomationConnectionName'))]",
-"connectionName": "[variables('AzureautomationConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation')]",
+    "connectionId": "[resourceId('Microsoft.Web/connections', variables('AzureautomationConnectionName'))]",
+    "connectionName": "[variables('AzureautomationConnectionName')]",
+    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation')]",
 "connectionProperties": {}
 },
 "office365": {
@@ -273,7 +221,7 @@
 "type": "Microsoft.Logic/workflows",
 "location": "[resourceGroup().location]",
 "tags": {
-"hidden-SentinelTemplateName": "la-unusedreservecloudpcs",
+"hidden-SentinelTemplateName": "la-alertunusedreservecloudpcs",
 "hidden-SentinelTemplateVersion": "1.0"
 },
 "identity": {

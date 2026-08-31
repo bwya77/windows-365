@@ -134,13 +134,16 @@
                         }
                     },
                     "reservePolicies": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "displayName": {
-                                "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "displayName": {
+                                    "type": "string"
+                                }
                             }
                         }
                     },
@@ -273,13 +276,13 @@
 "azureautomation-1": {
 "connectionId": "[resourceId('Microsoft.Web/connections', variables('Azureautomation-1ConnectionName'))]",
 "connectionName": "[variables('Azureautomation-1ConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureautomation')]",
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-1')]",
 "connectionProperties": {}
 },
 "office365-1": {
 "connectionId": "[resourceId('Microsoft.Web/connections', variables('Office365-1ConnectionName'))]",
 "connectionName": "[variables('Office365-1ConnectionName')]",
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]",
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Office365-1')]",
 "connectionProperties": {}
 }
 }
@@ -312,7 +315,7 @@
 "displayName": "[variables('Azureautomation-1ConnectionName')]",
 "customParameterValues": {},
 "api": {
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureautomation')]"
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Azureautomation-1')]"
 }
 }
 },
@@ -326,7 +329,7 @@
 "displayName": "[variables('Office365-1ConnectionName')]",
 "customParameterValues": {},
 "api": {
-"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+"id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/Office365-1')]"
 }
 }
 }
